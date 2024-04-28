@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab</title>
+</head>
+<body>
+    <h3>symbol table</h3>
+    <p>#include <stdio.h>
+        #include <ctype.h>
+        
+        int main()
+        {
+            char expression[15], character;
+            int index = 0;
+        
+            printf("Enter Expression terminated by $: ");
+            while ((character = getchar()) != '$')
+            {
+                if (isalpha(character) || strchr("+-/*%", character))
+                {
+                    expression[index++] = character;
+                    printf("%c \t %p \t %s \n", character, &expression[index - 1], isalpha(character) ? "identifier" : "operator");
+                }
+            }
+            return 0;
+        }
+        </p>
+    <h3>lexical analyser</h3>
+    <p>#include <stdio.h>
+        #include <string.h>
+        #include <ctype.h>
+        
+        char *keywordList[] = {"auto", "double", "int", "struct", "break", "else", "long", "switch", "case", "enum", "register", "typedef", "char", "extern", "return", "union", "const", "float", "short", "unsigned", "continue", "for", "signed", "void", "default", "goto", "sizeof", "volatile", "do", "if", "static", "while"};
+        char *operatorList[] = {"+", ">", "~", "%=", "-", "<", "&", "<<=", "*", ">=", "^", ">>=", "/", "<=", "|", "&=", "%", "&&", "=", "^=", "++", "||", "+=", "|=", "--", "!", "-=", "==", "<<", "*=", "!=", ">>", "/="};
+        char *specialSymbolList[] = {"[", "]", "{", "}", ",", ";", ":", "(", ")"};
+        
+        int isInArray(char *word, char **array, int size)
+        {
+            for (int i = 0; i < size; i++)
+                if (!strcmp(word, array[i]))
+                    return 1;
+            return 0;
+        }
+        
+        int isConstant(char *word)
+        {
+            int dotCount = 0;
+            for (int i = 0; word[i]; i++)
+            {
+                if (!isdigit(word[i]) && word[i] != '.')
+                    return 0;
+                if (word[i] == '.')
+                    dotCount++;
+            }
+            return dotCount <= 1;
+        }
+        
+        int isLiteral(char *word)
+        {
+            int length = strlen(word);
+            return length > 1 && ((word[0] == '"') && (word[length - 1] == '"'));
+        }
+        
+        int main()
+        {
+            FILE *fp = fopen("input.txt", "r");
+            if (!fp)
+            {
+                printf("Can't open input.txt for reading.\n");
+                return 1;
+            }
+            char currentWord[100];
+            while (fscanf(fp, "%s", currentWord) != EOF)
+            {
+                if (isInArray(currentWord, keywordList, sizeof(keywordList) / sizeof(char *)))
+                    printf("%s is a keyword\n", currentWord);
+                else if (isInArray(currentWord, operatorList, sizeof(operatorList) / sizeof(char *)))
+                    printf("%s is an operator\n", currentWord);
+                else if (isConstant(currentWord))
+                    printf("%s is a constant\n", currentWord);
+                else if (isInArray(currentWord, specialSymbolList, sizeof(specialSymbolList) / sizeof(char *)))
+                    printf("%s is a special symbol\n", currentWord);
+                else if (isLiteral(currentWord))
+                    printf("%s is a literal\n", currentWord);
+                else
+                    printf("%s is an identifier\n", currentWord);
+            }
+            fclose(fp);
+            return 0;
+        }
+        </p>
+    <h3>expression</h3>
+    <p>#include <stdio.h>
+        #include <ctype.h>
+        
+        char look_ahead;
+        
+        // E-> TE’
+        // E'-> +TE’ | epsilon
+        // T-> FT’
+        // T’-> *FT’ | epsilon
+        // F-> (E) | id
+        
+        void E();
+        void Edash();
+        void T();
+        void Tdash();
+        void F();
+        void match(char);
+        
+        int main()
+        {
+            printf("Enter the string: ");
+            look_ahead = getchar();
+            E();
+            if (look_ahead == '$')
+            {
+                printf("Parsing Successful");
+            }
+            else
+                printf("Parsing Failed");
+            return 0;
+        }
+        
+        void match(char c)
+        {
+            if (look_ahead == c)
+            {
+                look_ahead = getchar();
+            }
+            else
+            {
+                printf("Parsing Failed");
+            }
+        }
+        
+        // E-> TE’
+        void E()
+        {
+            T();
+            Edash();
+        }
+        // E'-> +TE’ | epsilon
+        void Edash()
+        {
+            if (look_ahead == '+')
+            {
+                match('+');
+                T();
+                Edash();
+            }
+            else
+            {
+                return;
+            }
+        }
+        // T-> FT’
+        void T()
+        {
+            F();
+            Tdash();
+        }
+        // T’-> *FT’ | epsilon
+        void Tdash()
+        {
+            if (look_ahead == '*')
+            {
+                match('*');
+                F();
+                Tdash();
+            }
+            else
+            {
+                return;
+            }
+        }
+        // F-> (E) | id
+        void F()
+        {
+            if (look_ahead == '(')
+            {
+                match('(');
+                E();
+                match(')');
+            }
+            else if (look_ahead == 'i')
+            {
+                match('i');
+                match('d');
+            }
+        }</p>
+        <h3>three</h3>
+        <p>import re
+
+            op = set("+-/*")
+            address = 100
+            count = 0
+            
+            
+            def arithematic(exp):
+                global count
+                symbols = []
+                operators = []
+            
+                for i in exp:
+                    if i in op:
+                        operators.append(i)
+                    else:
+                        symbols.insert(0, i)
+            
+                if "=" in symbols:
+                    while True:
+                        s = symbols.pop()
+                        if s == "=":
+                            break
+                        symbols.insert(0, s)
+            
+                for i in operators:
+                    count += 1
+                    e = "temp{0} = {1} {2} {3}".format(count, symbols.pop(), i, symbols.pop())
+                    symbols.append("temp{}".format(count))
+                    print(e)
+            
+                if len(symbols) != 2:
+                    return
+            
+                temp = symbols.pop()
+                print("{} = {}".format(symbols.pop(), temp))
+            
+            
+            def relation(exp):
+                global address
+                tokens = re.split(r">=|<=|==|>|<", exp)
+                operators = re.findall(r">=|<=|==|>|<", exp)
+            
+                print(
+                    "{0} if {2} {3} {1} goto {4}".format(
+                        address, tokens.pop(), tokens.pop(), operators.pop(), address + 3
+                    )
+                )
+                print("{} T := 0 ".format(address + 1))
+                print("{} goto {}".format(address + 2, address + 4))
+                print("{} T := 1".format(address + 3))
+                address += 4
+                print(address)
+            
+            
+            if __name__ == "__main__":
+                while True:
+                    option = input(
+                        "1 Assignment\n2 Arithmetic\n3 Relation\n4 Exit\nEnter choice : "
+                    )
+                    if option == "1":
+                        exp = input("Enter an expression : ")
+                        arithematic(exp)
+                    if option == "2":
+                        exp = input("Enter an expression : ")
+                        arithematic(exp)
+                    if option == "3":
+                        exp = input("Enter an expression : ")
+                        relation(exp)
+                    if option == "4":
+                        break
+                    print()
+            </p>
+</body>
+</html>
